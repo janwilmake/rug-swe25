@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Trending Repositories</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-gray-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold">GitHub Trending <span class="text-blue-400">Repositories</span></h1>
+                <div class="flex items-center space-x-4">
+                    <button id="refreshButton" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded transition">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh
+                    </button>
+                    <div class="relative">
+                        <select id="timeframeSelector" class="bg-gray-700 text-white px-4 py-2 rounded appearance-none pr-8 cursor-pointer">
+                            <option value="day">Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month">Monthly</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div id="loadingIndicator" class="flex justify-center items-center py-20">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        </div>
+        
+        <div id="errorMessage" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+            <p class="font-bold">Error</p>
+            <p id="errorMessageText">Something went wrong while fetching repositories.</p>
+        </div>
+
+        <div id="repositoriesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- Repository cards will be inserted here by JavaScript -->
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <p>GitHub Trending Repositories | Data refreshed daily</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

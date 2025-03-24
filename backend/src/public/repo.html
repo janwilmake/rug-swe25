@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repository Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-gray-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold">
+                    <a href="index.html" class="hover:text-blue-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Trending
+                    </a>
+                </h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div id="loadingIndicator" class="flex justify-center items-center py-20">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        </div>
+        
+        <div id="errorMessage" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+            <p class="font-bold">Error</p>
+            <p id="errorMessageText">Something went wrong while fetching repository details.</p>
+        </div>
+
+        <div id="repoDetails" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+                <div class="bg-gray-800 text-white p-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold" id="repoName">Repository Name</h2>
+                        <div class="flex items-center">
+                            <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold" id="repoRanking">#1</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex items-center">
+                        <img id="ownerAvatar" class="w-8 h-8 rounded-full mr-2" src="https://via.placeholder.com/150" alt="Owner avatar">
+                        <a id="ownerName" href="#" class="text-blue-300 hover:underline">owner</a>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <p id="repoDescription" class="text-gray-700 mb-4">Repository description</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-2 text-gray-800">Repository Information</h3>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <ul class="space-y-2">
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Stars:</span>
+                                        <span class="font-medium" id="repoStars">0</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Forks:</span>
+                                        <span class="font-medium" id="repoForks">0</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Open Issues:</span>
+                                        <span class="font-medium" id="repoIssues">0</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Watchers:</span>
+                                        <span class="font-medium" id="repoWatchers">0</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Created:</span>
+                                        <span class="font-medium" id="repoCreated">Unknown</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Last Updated:</span>
+                                        <span class="font-medium" id="repoUpdated">Unknown</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Default Branch:</span>
+                                        <span class="font-medium" id="repoBranch">master</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold mb-2 text-gray-800">Additional Details</h3>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <ul class="space-y-2">
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Language:</span>
+                                        <span class="font-medium" id="repoLanguage">Unknown</span>
+                                    </li>
+                                    <li class="flex justify-between items-center">
+                                        <span class="text-gray-600">License:</span>
+                                        <span class="font-medium" id="repoLicense">Unknown</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Size:</span>
+                                        <span class="font-medium" id="repoSize">0 KB</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Archived:</span>
+                                        <span class="font-medium" id="repoArchived">No</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="text-gray-600">Private:</span>
+                                        <span class="font-medium" id="repoPrivate">No</span>
+                                    </li>
+                                    <li id="repoHomepageContainer" class="flex justify-between">
+                                        <span class="text-gray-600">Homepage:</span>
+                                        <a id="repoHomepage" href="#" class="text-blue-500 hover:underline">None</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Topics</h3>
+                        <div id="repoTopics" class="flex flex-wrap gap-2">
+                            <!-- Topics will be added here -->
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <a id="repoLink" href="#" target="_blank" class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded flex items-center justify-center transition-colors">
+                            <i class="fab fa-github mr-2"></i> View on GitHub
+                        </a>
+                        <a id="issuesLink" href="#" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded flex items-center justify-center transition-colors">
+                            <i class="fas fa-exclamation-circle mr-2"></i> View Issues
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Section -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Recent Activity</h3>
+                    
+                    <div class="mb-4">
+                        <h4 class="text-lg font-medium mb-2 text-gray-700">Issues</h4>
+                        <div id="recentIssues" class="space-y-2">
+                            <!-- Issues will be added here -->
+                            <p class="text-gray-500 italic" id="noIssuesMessage">No recent issues</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4 class="text-lg font-medium mb-2 text-gray-700">Pull Requests</h4>
+                        <div id="recentPulls" class="space-y-2">
+                            <!-- Pull Requests will be added here -->
+                            <p class="text-gray-500 italic" id="noPullsMessage">No recent pull requests</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium mb-2 text-gray-700">Discussions</h4>
+                        <div id="recentDiscussions" class="space-y-2">
+                            <!-- Discussions will be added here -->
+                            <p class="text-gray-500 italic" id="noDiscussionsMessage">No recent discussions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <p>GitHub Trending Repositories | Data refreshed daily</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
