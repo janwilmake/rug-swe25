@@ -37,14 +37,8 @@
 <body class="gradient-bg text-gray-100 min-h-screen">
     <header class="container mx-auto py-6 px-4">
         <div class="flex justify-between items-center">
-            <a href="index.html" class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">Hot ForGithub</a>
+            <a href="index.html" class="text-3xl font-bold text-white">Hot ForGithub</a>
             <div class="flex space-x-4 items-center">
-                <div class="relative">
-                    <input type="text" placeholder="Search repositories..." class="bg-slate-700 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
                 <button class="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-4 py-2 transition-colors">
                     Sign In
                 </button>
@@ -87,7 +81,7 @@
 
             <div class="flex items-center space-x-3 bg-slate-800 rounded-lg px-4 py-2">
                 <span class="text-gray-400">Sort by:</span>
-                <select class="bg-transparent border-none focus:outline-none text-white">
+                <select id="option-select" class="bg-transparent border-none focus:outline-none text-white">
                     <option value="stars">Stars</option>
                     <option value="forks">Forks</option>
                     <option value="updated">Recently Updated</option>
@@ -108,11 +102,10 @@
 
             <div class="flex items-center space-x-3 bg-slate-800 rounded-lg px-4 py-2">
                 <span class="text-gray-400">Date:</span>
-                <select class="bg-transparent border-none focus:outline-none text-white">
-                    <option value="today">Today</option>
+                <select id="timeframe-select" class="bg-transparent border-none focus:outline-none text-white">
+                    <option value="day">Today</option>
                     <option value="week">This week</option>
                     <option value="month">This month</option>
-                    <option value="custom">Custom</option>
                 </select>
             </div>
         </div>
@@ -184,9 +177,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Function to fetch repos from the API
-  async function fetchRepos() {
+  async function fetchRepos(timeframe = 'day') {
     try {
-      const response = await fetch('http://localhost:45943/day?enrich=true');
+      const response = await fetch(`http://localhost:45943/${timeframe}?enrich=true`);
       
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
@@ -261,7 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear the container before appending new elements
     reposContainer.innerHTML = '';
 
-    Object.values(repos).forEach(repo => {
+    //if option-select 
+
+    Object.values(repos).sort((a, b) => b.info.watchers_count- a.info.watchers_count).forEach(repo => {
         const {
             name,
             owner: { login, avatar_url },
@@ -288,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="flex-1">
                         <div class="flex items-center flex-wrap gap-2">
-                            <h3 class="text-lg font-bold">${login}/${name}</h3>
+                            <h3 class="text-lg font-bold"><a href="https://github.com/${login}/${name}" target="_blank" class="hover:text-blue-400 transition-colors">${login}/${name}</a></h3>
                             ${has_wiki ? '<span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-900 text-purple-300">Wiki</span>' : ''}
                         </div>
                         <p class="text-gray-400 mt-1">${description || 'No description available'}</p>
@@ -336,21 +331,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 }
 
-  // Initialize: fetch and render repos
-  fetchRepos().then(repos => {
+  // Global variable to store the current repositories
+  let currentRepos = null;
+
+  // Function to load repositories with the specified timeframe
+  async function loadRepositories(timeframe = 'day') {
+    // Show loading state
+    reposContainer.innerHTML = `
+      <div class="bg-slate-800 rounded-xl p-6 flex justify-center">
+        <div class="flex items-center">
+          <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-xl font-medium text-gray-300">Loading repositories...</span>
+        </div>
+      </div>
+    `;
+
+    const repos = await fetchRepos(timeframe);
     if (repos) {
+      currentRepos = repos;
       renderRepos(repos);
       
       // Update the repository count in the category header if present
       const categoryHeader = document.querySelector('.category-header-count');
       if (categoryHeader) {
-        categoryHeader.textContent = `${repos.length} repositories`;
+        categoryHeader.textContent = `${Object.keys(repos).length} repositories`;
       }
       
       // Setup filter functionality
       setupFilters(repos);
     }
-  });
+  }
+
+  // Initialize: fetch and render repos with default timeframe
+  loadRepositories('day');
 
   // Setup filter functionality
   function setupFilters(allRepos) {
@@ -361,7 +377,9 @@ document.addEventListener('DOMContentLoaded', function() {
       languageFilter.innerHTML = '<option value="all">All</option>';
       
       // Get unique languages
-      const languages = [...new Set(allRepos.filter(repo => repo.language).map(repo => repo.language))];
+      const languages = [...new Set(Object.values(allRepos)
+        .filter(repo => repo.info.language)
+        .map(repo => repo.info.language))];
       
       // Add options for each language
       languages.forEach(language => {
@@ -374,9 +392,18 @@ document.addEventListener('DOMContentLoaded', function() {
       // Add event listener
       languageFilter.addEventListener('change', function() {
         const selectedLanguage = this.value;
-        const filteredRepos = selectedLanguage === 'all' 
-          ? allRepos 
-          : allRepos.filter(repo => repo.language === selectedLanguage);
+        let filteredRepos;
+        
+        if (selectedLanguage === 'all') {
+          filteredRepos = currentRepos;
+        } else {
+          filteredRepos = Object.fromEntries(
+            Object.entries(currentRepos).filter(([_, repo]) => 
+              repo.info.language === selectedLanguage
+            )
+          );
+        }
+        
         renderRepos(filteredRepos);
       });
     }
@@ -386,25 +413,33 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sortFilter) {
       sortFilter.addEventListener('change', function() {
         const sortValue = this.value;
-        let sortedRepos = [...allRepos];
+        
+        // Convert object to array for sorting
+        let reposArray = Object.values(currentRepos);
         
         switch(sortValue) {
           case 'stars':
-            sortedRepos.sort((a, b) => b.watchers_count - a.watchers_count);
+            reposArray.sort((a, b) => b.info.watchers_count - a.info.watchers_count);
             break;
           case 'forks':
-            sortedRepos.sort((a, b) => b.forks_count - a.forks_count);
+            reposArray.sort((a, b) => b.info.forks_count - a.info.forks_count);
             break;
           case 'updated':
-            sortedRepos.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+            reposArray.sort((a, b) => new Date(b.info.updated_at) - new Date(a.info.updated_at));
             break;
           case 'created':
             // If created_at exists in the data
-            if (sortedRepos[0].created_at) {
-              sortedRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            if (reposArray[0].info.created_at) {
+              reposArray.sort((a, b) => new Date(b.info.created_at) - new Date(a.info.created_at));
             }
             break;
         }
+        
+        // Convert back to object format
+        const sortedRepos = reposArray.reduce((obj, repo) => {
+          obj[repo.info.id] = repo;
+          return obj;
+        }, {});
         
         renderRepos(sortedRepos);
       });
@@ -418,42 +453,32 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Skip filtering if "all" is selected
         if (selectedFramework === 'all') {
-          renderRepos(allRepos);
+          renderRepos(currentRepos);
           return;
         }
         
         // Look for framework in name or description
-        const filteredRepos = allRepos.filter(repo => {
-          const nameMatch = repo.name.toLowerCase().includes(selectedFramework);
-          const descMatch = repo.description && repo.description.toLowerCase().includes(selectedFramework);
-          return nameMatch || descMatch;
-        });
+        const filteredRepos = Object.fromEntries(
+          Object.entries(currentRepos).filter(([_, repo]) => {
+            const nameMatch = repo.info.name.toLowerCase().includes(selectedFramework);
+            const descMatch = repo.info.description && repo.info.description.toLowerCase().includes(selectedFramework);
+            return nameMatch || descMatch;
+          })
+        );
         
         renderRepos(filteredRepos);
       });
     }
     
-    // Add search functionality
-    const searchInput = document.querySelector('input[placeholder="Search repositories..."]');
-    if (searchInput) {
-      searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase().trim();
-        
-        if (!searchTerm) {
-          renderRepos(allRepos);
-          return;
-        }
-        
-        const filteredRepos = allRepos.filter(repo => {
-          const nameMatch = (repo.name && repo.name.toLowerCase().includes(searchTerm)) || 
-                           (repo.owner.login && repo.owner.login.toLowerCase().includes(searchTerm));
-          const descMatch = repo.description && repo.description.toLowerCase().includes(searchTerm);
-          return nameMatch || descMatch;
-        });
-        
-        renderRepos(filteredRepos);
+    // Timeframe filter
+    const timeframeFilter = document.getElementById('timeframe-select');
+    if (timeframeFilter) {
+      timeframeFilter.addEventListener('change', function() {
+        const selectedTimeframe = this.value;
+        loadRepositories(selectedTimeframe);
       });
     }
+
   }
 });
     </script>
