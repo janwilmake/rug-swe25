@@ -90,17 +90,6 @@
             </div>
 
             <div class="flex items-center space-x-3 bg-slate-800 rounded-lg px-4 py-2">
-                <span class="text-gray-400">Framework:</span>
-                <select class="bg-transparent border-none focus:outline-none text-white">
-                    <option value="all">All</option>
-                    <option value="react">React</option>
-                    <option value="vue">Vue</option>
-                    <option value="angular">Angular</option>
-                    <option value="svelte">Svelte</option>
-                </select>
-            </div>
-
-            <div class="flex items-center space-x-3 bg-slate-800 rounded-lg px-4 py-2">
                 <span class="text-gray-400">Date:</span>
                 <select id="timeframe-select" class="bg-transparent border-none focus:outline-none text-white">
                     <option value="day">Today</option>
@@ -256,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     //if option-select 
 
-    Object.values(repos).sort((a, b) => b.info.watchers_count- a.info.watchers_count).forEach(repo => {
+    Object.values(repos).forEach(repo => {
         const {
             name,
             owner: { login, avatar_url },
@@ -269,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
             subscribers_count
         } = repo.info;  // Ensure we're accessing `repo.info`
 
-        console.log(`Repo: ${name}, Owner: ${login}`);
+        //console.log(`Repo: ${name}, Owner: ${login}`);
 
         // Create repo card element
         const repoElement = document.createElement('div');
@@ -283,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="flex-1">
                         <div class="flex items-center flex-wrap gap-2">
-                            <h3 class="text-lg font-bold"><a href="https://github.com/${login}/${name}" target="_blank" class="hover:text-blue-400 transition-colors">${login}/${name}</a></h3>
+                            <h3 class="text-lg font-bold"><a href="https://diagram.forgithub.com/${login}/${name}" target="_blank" class="hover:text-blue-400 transition-colors">${login}/${name}</a></h3>
                             ${has_wiki ? '<span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-900 text-purple-300">Wiki</span>' : ''}
                         </div>
                         <p class="text-gray-400 mt-1">${description || 'No description available'}</p>
@@ -409,65 +398,45 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Sort by filter
-    const sortFilter = document.querySelector('select[class*="bg-transparent"][class*="border-none"]:nth-of-type(2)');
+    const sortFilter = document.getElementById('option-select'); // Select the dropdown by ID
+
     if (sortFilter) {
-      sortFilter.addEventListener('change', function() {
-        const sortValue = this.value;
-        
-        // Convert object to array for sorting
-        let reposArray = Object.values(currentRepos);
-        
-        switch(sortValue) {
-          case 'stars':
-            reposArray.sort((a, b) => b.info.watchers_count - a.info.watchers_count);
-            break;
-          case 'forks':
-            reposArray.sort((a, b) => b.info.forks_count - a.info.forks_count);
-            break;
-          case 'updated':
-            reposArray.sort((a, b) => new Date(b.info.updated_at) - new Date(a.info.updated_at));
-            break;
-          case 'created':
-            // If created_at exists in the data
-            if (reposArray[0].info.created_at) {
-              reposArray.sort((a, b) => new Date(b.info.created_at) - new Date(a.info.created_at));
+        console.log("Sort filter found!", sortFilter); // Debugging check
+
+        function sortAndRenderRepos(sortValue) {
+            console.log("Sorting by:", sortValue); // Debugging check
+
+            let reposArray = Object.values(currentRepos);
+
+            switch(sortValue) {
+                case 'stars':
+                    reposArray.sort((a, b) => b.info.watchers_count - a.info.watchers_count);
+                    break;
+                case 'forks':
+                    reposArray.sort((a, b) => b.info.forks_count - a.info.forks_count);
+                    break;
+                case 'updated':
+                    reposArray.sort((a, b) => new Date(b.info.updated_at) - new Date(a.info.updated_at));
+                    break;
+                case 'created':
+                    if (reposArray[0].info.created_at) {
+                        reposArray.sort((a, b) => new Date(b.info.created_at) - new Date(a.info.created_at));
+                    }
+                    break;
             }
-            break;
+
+            renderRepos(reposArray); // Render the sorted repositories
         }
-        
-        // Convert back to object format
-        const sortedRepos = reposArray.reduce((obj, repo) => {
-          obj[repo.info.id] = repo;
-          return obj;
-        }, {});
-        
-        renderRepos(sortedRepos);
-      });
-    }
-    
-    // Framework filter - this would need repo data to include framework info
-    const frameworkFilter = document.querySelector('select[class*="bg-transparent"][class*="border-none"]:nth-of-type(3)');
-    if (frameworkFilter) {
-      frameworkFilter.addEventListener('change', function() {
-        const selectedFramework = this.value.toLowerCase();
-        
-        // Skip filtering if "all" is selected
-        if (selectedFramework === 'all') {
-          renderRepos(currentRepos);
-          return;
-        }
-        
-        // Look for framework in name or description
-        const filteredRepos = Object.fromEntries(
-          Object.entries(currentRepos).filter(([_, repo]) => {
-            const nameMatch = repo.info.name.toLowerCase().includes(selectedFramework);
-            const descMatch = repo.info.description && repo.info.description.toLowerCase().includes(selectedFramework);
-            return nameMatch || descMatch;
-          })
-        );
-        
-        renderRepos(filteredRepos);
-      });
+
+        // Event listener for dropdown change
+        sortFilter.addEventListener('change', function() {
+            sortAndRenderRepos(this.value);
+        });
+
+        // **Set default sorting to "stars" on page load**
+        sortAndRenderRepos('stars'); // Initial sorting when page loads
+    } else {
+        console.log("Sort filter not found!"); // Debugging check
     }
     
     // Timeframe filter
