@@ -20,8 +20,39 @@ interface EnrichedData {
   [repo: string]: EnrichedRepoInfo;
 }
 
+// Define CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Max-Age': '86400', // 24 hours cache for preflight requests
+};
+
+// Helper function to add CORS headers to any response
+function addCorsHeaders(response: Response): Response {
+  // Create a new response with the same body but with CORS headers added
+  const newHeaders = new Headers(response.headers);
+
+  // Add CORS headers
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    newHeaders.set(key, value);
+  });
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders
+  });
+}
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    // Handle CORS preflight requests (OPTIONS)
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: corsHeaders
+      });
+    }
+
     const url = new URL(request.url);
     const path = url.pathname.slice(1);
     console.log(`[info] Requested path: ${path}`);
@@ -65,11 +96,13 @@ export default {
     // Helper function to enrich response data if needed
     async function processResponse(response: Response, timeframe: 'day' | 'week' | 'month'): Promise<Response> {
       if (!shouldEnrich) {
-        return response;
+        // Just add CORS headers to the original response
+        return addCorsHeaders(response);
       }
 
       if (!response.ok) {
-        return response; // Don't process error responses
+        // Don't process error responses, but still add CORS headers
+        return addCorsHeaders(response);
       }
 
       try {
@@ -154,17 +187,19 @@ export default {
           finalData = Object.fromEntries(limitedEntries);
         }
 
-        // Return new response with enriched data
+        // Return new response with enriched data and CORS headers
         return new Response(JSON.stringify(finalData), {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': bypassCache ? 'no-cache' : `max-age=${getTtlForTimeframe(timeframe)}`
+            'Cache-Control': bypassCache ? 'no-cache' : `max-age=${getTtlForTimeframe(timeframe)}`,
+            ...corsHeaders // Add CORS headers
           }
         });
       } catch (error) {
         console.error('Error enriching response data:', error);
-        return response; // Return original response on error
+        // Return original response with CORS headers on error
+        return addCorsHeaders(response);
       }
     }
 
@@ -190,13 +225,15 @@ export default {
 
     // Week pattern: YYYY-WXX (where XX is 1-52)
     if (/^\d{4}-W(0?[1-9]|[1-4][0-9]|5[0-2])$/.test(path)) {
-      return new Response("api not implemented yet", { status: 501 });
+      // Add CORS headers to not implemented response
+      return addCorsHeaders(new Response("api not implemented yet", { status: 501 }));
     }
 
     // Month pattern: YYYY-MM
     if (/^\d{4}-\d{2}$/.test(path)) {
       const monthController = new MonthController(env);
-      return new Response("api not implemented yet", { status: 501 });
+      // Add CORS headers to not implemented response
+      return addCorsHeaders(new Response("api not implemented yet", { status: 501 }));
     }
 
     // Special endpoint for today (/day)
@@ -220,10 +257,10 @@ export default {
       return processResponse(response, 'week');
     }
 
-    // Default response for unmatched routes
-    return new Response(
+    // Default response for unmatched routes (with CORS headers)
+    return addCorsHeaders(new Response(
       "Please fetch YYYY-MM-DD, YYYY-W1-52 (week), or YYYY-MM (month)",
       { status: 400 }
-    );
+    ));
   },
 };
