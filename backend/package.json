@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250310.0",
+    "wrangler": "^3.100.0"
+  },
+  "dependencies": {
+    "@cfa/fetch-each": "npm:@jsr/cfa__fetch-each@^1.0.14",
+    "packages.json": "^0.0.1-security"
+  }
+}
