@@ -1,11 +1,29 @@
 {
-  "type": "module",
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250310.0",
-    "wrangler": "^3.100.0"
+  "name": "popular-repos-analyzer",
+  "version": "1.0.0",
+  "description": "An API for analyzing popular GitHub repositories using LLM",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler publish",
+    "build": "webpack",
+    "test": "jest",
+    "format": "prettier --write \"src/**/*.ts\""
   },
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "@cfa/fetch-each": "npm:@jsr/cfa__fetch-each@^1.0.14",
-    "packages.json": "^0.0.1-security"
+    
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240515.0",
+    "@types/jest": "^29.5.6",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.3",
+    "ts-jest": "^29.1.1",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.2.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   }
 }

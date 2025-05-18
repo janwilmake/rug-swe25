@@ -1,2 +1,43 @@
-node_modules
-.wrangler
+# .gitignore file for the repository analysis project
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.wrangler/
+worker/
+worker-site/
+
+# Environment variables and secrets
+.env
+.dev.vars
+
+# LOCAL ENVIRONMENT CONFIGURATION - CONTAINS API KEYS
+env/apikey.ts
+
+# Editor and IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+
+# Cloudflare Workers
+.cloudflare/
